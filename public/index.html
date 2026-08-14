@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Signal — Proactive AI Mental-Health Monitoring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#132420;--teal-900:#0f2e28;--teal-800:#16453c;--teal-700:#1f5c4f;
+    --sage:#7c9a6f;--sage-light:#e3ead9;--amber:#d99a3f;--amber-deep:#b97a26;
+    --clay:#b85c3c;--clay-light:#f2ded3;--parchment:#f3ede0;--paper:#faf6ec;
+    --paper-2:#fffdf7;--line:#ddd2b8;--text-soft:#5c5347;
+    --high:#b8402f;--moderate:#c68a2e;--low:#4c7a56;
+    --shadow:0 1px 2px rgba(19,36,32,.06),0 6px 20px rgba(19,36,32,.07);
+  }
+  *{box-sizing:border-box;}html,body{margin:0;padding:0;}
+  body{background:var(--parchment);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;}
+  h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:600;margin:0 0 .4em 0;letter-spacing:-.01em;color:var(--teal-900);}
+  code,.mono{font-family:'IBM Plex Mono',monospace;}a{color:var(--teal-700);}
+  ::selection{background:var(--amber);color:var(--teal-900);}
+  .app{max-width:1180px;margin:0 auto;padding:0 22px 80px;}
+  header.top{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,var(--teal-900),var(--teal-800));color:var(--paper-2);padding:14px 22px;display:flex;align-items:center;gap:22px;box-shadow:var(--shadow);}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem;white-space:nowrap;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(217,154,63,.25);}
+  nav.tabs{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:thin;}
+  nav.tabs button{background:transparent;border:none;color:#cfe2d8;font:500 .82rem/1 'Inter',sans-serif;padding:10px 13px;border-radius:8px 8px 0 0;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:.15s;}
+  nav.tabs button:hover{background:rgba(255,255,255,.06);color:#fff;}
+  nav.tabs button.active{color:#fff;border-bottom:2px solid var(--amber);background:rgba(255,255,255,.08);}
+  .session-badge{font-size:.75rem;color:#cfe2d8;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .session-badge button{background:var(--clay);color:#fff;border:none;padding:6px 11px;border-radius:6px;font:600 .72rem/1 'Inter',sans-serif;cursor:pointer;}
+  section.tab{display:none;padding-top:34px;animation:fade .25s ease;}
+  section.tab.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .eyebrow{font:700 .68rem/1 'Inter',sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--clay);background:var(--clay-light);display:inline-block;padding:5px 10px;border-radius:5px;margin-bottom:12px;}
+  p.lede{font-size:1.02rem;color:var(--text-soft);max-width:760px;}
+  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow);}
+  .grid{display:grid;gap:16px;}.grid.cols-2{grid-template-columns:repeat(2,1fr);}.grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  @media(max-width:900px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr;}}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;}
+  table.styled thead th{background:var(--teal-900);color:#fff;text-align:left;padding:10px 12px;font-weight:600;font-size:.78rem;text-transform:uppercase;}
+  table.styled thead th:first-child{border-radius:8px 0 0 0;}table.styled thead th:last-child{border-radius:0 8px 0 0;}
+  table.styled tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.styled tbody tr:nth-child(odd){background:#f7f1e3;}table.styled tbody tr:hover{background:var(--sage-light);}
+  .pill{display:inline-block;padding:3px 9px;border-radius:20px;font:600 .72rem/1 'Inter',sans-serif;}
+  .pill.high{background:#f6ddd7;color:var(--high);}.pill.moderate{background:#f7e6c7;color:var(--moderate);}.pill.low{background:#dcead9;color:var(--low);}
+  .hero{background:radial-gradient(120% 140% at 10% 0%,#1d4b40 0%,var(--teal-900) 55%,#0c221d 100%);color:#f4ecd8;border-radius:16px;padding:40px 38px;margin-bottom:26px;position:relative;overflow:hidden;}
+  .hero::after{content:"";position:absolute;right:-60px;top:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(217,154,63,.25),transparent 70%);}
+  .hero h1{color:#fff;font-size:2.1rem;margin-bottom:.25em;}.hero .sub{color:#c9dcce;font-size:1.02rem;max-width:640px;}.hero .tagline{color:var(--amber);font:600 .95rem 'Fraunces',serif;font-style:italic;margin-top:14px;}
+  .loop{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 8px;}
+  .loop .step{background:var(--teal-800);color:#fff;padding:9px 16px;border-radius:999px;font:600 .8rem/1 'Inter',sans-serif;display:flex;align-items:center;gap:8px;}
+  .loop .step span{background:var(--amber);color:var(--teal-900);width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;}
+  .loop .arrow{align-self:center;color:var(--sage);font-size:1.1rem;}
+  .scope-note{border:1px solid #e3c185;background:#fbf1de;border-radius:10px;padding:16px 18px;margin:22px 0;}
+  .scope-note b{color:var(--amber-deep);}
+  /* Login */
+  .login-shell{max-width:420px;margin:0 auto;}
+  .toggle-row{display:flex;background:var(--sage-light);border-radius:10px;padding:4px;margin-bottom:18px;}
+  .toggle-row button{flex:1;padding:9px;border:none;background:transparent;border-radius:8px;font:600 .85rem 'Inter';cursor:pointer;color:var(--teal-800);}
+  .toggle-row button.active{background:var(--teal-900);color:#fff;}
+  label.field{display:block;font-size:.8rem;font-weight:600;color:var(--teal-800);margin:12px 0 5px;}
+  input[type=text],input[type=email],input[type=password],select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:400 .9rem 'Inter';background:var(--paper);}
+  .btn-primary{width:100%;margin-top:16px;padding:11px;background:var(--teal-700);color:#fff;border:none;border-radius:8px;font:600 .9rem 'Inter';cursor:pointer;}
+  .btn-primary:hover{background:var(--teal-800);}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--teal-800);padding:6px 11px;border-radius:6px;font:600 .74rem 'Inter';cursor:pointer;}
+  .seed-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .form-msg{font-size:.8rem;padding:9px 12px;border-radius:8px;margin-top:10px;}
+  .form-msg.err{background:#fbe4dd;color:var(--high);}.form-msg.ok{background:#dcead9;color:var(--low);}
+  .disclaimer{background:#fbf1de;border:1px solid #e3c185;border-radius:10px;padding:14px 16px;font-size:.82rem;color:#6b5327;margin-top:22px;}
+  /* Check-in */
+  .checkin-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:start;}
+  @media(max-width:900px){.checkin-grid{grid-template-columns:1fr;}}
+  .mood-row{display:flex;gap:8px;margin-top:6px;}
+  .mood-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--paper);cursor:pointer;font-weight:700;color:var(--teal-800);}
+  .mood-btn.active{background:var(--teal-800);color:#fff;border-color:var(--teal-800);}
+  .result-panel{border-radius:12px;padding:20px 22px;}
+  .result-panel.low{background:#e5f0e2;}.result-panel.moderate{background:#f8ecd3;}.result-panel.high{background:#f6dcd4;}
+  .result-panel .level{font:700 1.3rem 'Fraunces',serif;}
+  .result-panel.low .level{color:var(--low);}.result-panel.moderate .level{color:var(--moderate);}.result-panel.high .level{color:var(--high);}
+  .bar-track{height:8px;background:#fff;border-radius:6px;margin:10px 0 14px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;}
+  .rationale-list{list-style:none;padding:0;margin:0;font-size:.83rem;color:var(--text-soft);}
+  .rationale-list li{padding:4px 0;display:flex;gap:8px;}.rationale-list li::before{content:"—";}
+  .intervention-box{margin-top:14px;background:#fff;border-radius:10px;padding:12px 14px;font-size:.85rem;}
+  .stat-strip{display:flex;gap:12px;margin-bottom:18px;}
+  .stat-box{flex:1;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;text-align:center;padding:14px 8px;}
+  .stat-box .n{font:700 1.5rem 'Fraunces',serif;color:var(--teal-800);}.stat-box .l{font-size:.72rem;color:var(--text-soft);text-transform:uppercase;letter-spacing:.03em;}
+  .queue-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:.85rem;}
+  .queue-actions{display:flex;gap:6px;align-items:center;}
+  .queue-actions select{width:auto;padding:6px 8px;font-size:.78rem;}
+  .queue-actions .save-btn{padding:6px 10px;font-size:.75rem;background:var(--sage);color:#fff;border:none;border-radius:6px;cursor:pointer;}
+  .role-gate{background:#fff;border:1px dashed var(--sage);border-radius:10px;padding:22px;text-align:center;color:var(--text-soft);font-size:.9rem;}
+  /* Reports */
+  .chart-card{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);}
+  .chart-card h4{font-size:.9rem;margin-bottom:12px;}
+  .chart-box{position:relative;height:230px;}
+  .report-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px;}
+  @media(max-width:900px){.report-grid{grid-template-columns:1fr;}}
+  .report-grid.full{grid-template-columns:1fr;}
+  .leaderboard-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:.84rem;}
+  .leaderboard-row:last-child{border-bottom:none;}
+  .live-dot{display:inline-flex;align-items:center;gap:6px;font:600 .72rem 'Inter';color:var(--low);background:#dcead9;padding:4px 10px;border-radius:20px;}
+  .live-dot .pulse{width:7px;height:7px;border-radius:50%;background:var(--low);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%{opacity:1;}50%{opacity:.3;}100%{opacity:1;}}
+  /* Backend tab */
+  .method{font:700 .72rem 'IBM Plex Mono';padding:2px 7px;border-radius:5px;}
+  .method.get{background:#e1ecf7;color:#1a5aa5;}.method.post{background:#e6f2df;color:#3f7a2c;}.method.patch{background:#fbeccb;color:#a3690f;}
+  .formula-box{background:var(--teal-900);color:#f3ede0;border-radius:10px;padding:18px 20px;font-family:'IBM Plex Mono',monospace;font-size:.85rem;line-height:1.8;}
+  .formula-box .hl{color:var(--amber);}
+  /* DB tab */
+  .erd{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media(max-width:1000px){.erd{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:600px){.erd{grid-template-columns:1fr;}}
+  .table-card{background:var(--paper-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .table-card .t-head{background:var(--teal-900);color:#fff;padding:10px 14px;font:700 .85rem 'IBM Plex Mono';}
+  .table-card .t-row{display:flex;justify-content:space-between;padding:7px 14px;font-size:.78rem;border-bottom:1px solid var(--line);}
+  .table-card .t-row.pk .fname{color:var(--clay);font-weight:700;}
+  .table-card .t-row .ftype{color:var(--text-soft);font-family:'IBM Plex Mono',monospace;font-size:.72rem;}
+  /* Log rows */
+  .log-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:.82rem;}
+  .log-row:last-child{border-bottom:none;}
+  .event-pill{font:600 .68rem 'Inter';padding:2px 8px;border-radius:20px;background:var(--sage-light);color:var(--teal-800);}
+  .event-pill.signup{background:var(--clay-light);color:var(--clay);}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--teal-700);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  ul.bullets{padding-left:20px;color:var(--text-soft);font-size:.9rem;}ul.bullets li{margin-bottom:8px;}
+  footer.app-footer{margin-top:50px;padding-top:22px;border-top:1px solid var(--line);color:var(--text-soft);font-size:.8rem;text-align:center;}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="dot"></span> First Signal</div>
+  <nav class="tabs" id="tabNav"></nav>
+  <div class="session-badge" id="sessionBadge">Not logged in</div>
+</header>
+
+<div class="app">
+
+  <!-- OVERVIEW -->
+  <section class="tab active" data-tab="overview">
+    <div class="hero">
+      <div class="eyebrow" style="background:rgba(217,154,63,.18);color:var(--amber);">Full-Stack App · Node.js + Express + SQLite</div>
+      <h1>Proactive mental-health check-ins, with a human on every escalation.</h1>
+      <p class="sub">First Signal is a working, full-stack application: employees submit a daily check-in, an explainable rule-based engine scores risk in real time, low/moderate cases get an instant grounding exercise, and every high-risk case is routed to a human care coordinator. The system never auto-resolves a case.</p>
+      <div class="loop">
+        <div class="step"><span>1</span> Check-in + consent</div>
+        <div class="arrow">→</div>
+        <div class="step"><span>2</span> Risk-scoring engine</div>
+        <div class="arrow">→</div>
+        <div class="step"><span>3</span> Micro-intervention</div>
+        <div class="arrow">→</div>
+        <div class="step"><span>4</span> Human escalation</div>
+      </div>
+      <div class="tagline">"AI flags, humans decide."</div>
+    </div>
+
+    <div class="grid cols-3" style="margin-top:16px;">
+      <div class="card"><span style="font-size:1.4rem;">🧩</span><h4>Full-stack, real backend</h4><p style="font-size:.87rem;color:var(--text-soft);">Node.js + Express REST API with JWT auth, bcrypt password hashing, and SQLite database — no mock data, everything persists on disk.</p></div>
+      <div class="card"><span style="font-size:1.4rem;">🔐</span><h4>Real auth & roles</h4><p style="font-size:.87rem;color:var(--text-soft);">Signup, login, JWT sessions, bcrypt hashing, and route-level role guards for employee vs. coordinator.</p></div>
+      <div class="card"><span style="font-size:1.4rem;">🗄️</span><h4>Persistent SQLite</h4><p style="font-size:.87rem;color:var(--text-soft);">Single-file, zero-config database with a proper 4-table relational schema, foreign keys, and indexes.</p></div>
+      <div class="card"><span style="font-size:1.4rem;">📊</span><h4>Explainable risk engine</h4><p style="font-size:.87rem;color:var(--text-soft);">PHQ-2 screener + keyword sentiment, blended into a 0–100 score with human-readable rationale for every result.</p></div>
+      <div class="card"><span style="font-size:1.4rem;">📡</span><h4>Real API calls</h4><p style="font-size:.87rem;color:var(--text-soft);">This frontend communicates with the Express server via fetch() — no localStorage simulation. Data is stored in SQLite on the server.</p></div>
+      <div class="card"><span style="font-size:1.4rem;">🚨</span><h4>Human-in-the-loop</h4><p style="font-size:.87rem;color:var(--text-soft);">High-risk check-ins create an alert only a coordinator can see and close. "AI flags, humans decide" is enforced in route logic.</p></div>
+    </div>
+
+    <div class="scope-note">
+      <b>Full-stack architecture:</b> Frontend (HTML/CSS/JS) → Express REST API → SQLite database. Run <code>npm install</code> then <code>npm start</code> to launch. Default port: 3000.
+    </div>
+
+    <h3>Seeded Demo Accounts</h3>
+    <table class="styled" style="max-width:500px;">
+      <thead><tr><th>Email</th><th>Role</th><th>Password</th></tr></thead>
+      <tbody>
+        <tr><td>coordinator@demo.com</td><td>Coordinator</td><td>ChangeMe123!</td></tr>
+        <tr><td>priya@demo.com</td><td>Employee</td><td>password123</td></tr>
+        <tr><td>rahul@demo.com</td><td>Employee</td><td>password123</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- LOGIN -->
+  <section class="tab" data-tab="login">
+    <div class="eyebrow">Authentication · JWT + bcrypt</div>
+    <h2>Login</h2>
+    <p class="lede">Real login/signup — credentials are sent to the Express server, verified with bcrypt, and a JWT is returned for all subsequent API calls.</p>
+    <div class="login-shell card" style="margin-top:20px;">
+      <div class="toggle-row">
+        <button id="showLogin" class="active">Log in</button>
+        <button id="showSignup">Sign up</button>
+      </div>
+      <div id="loginForm">
+        <label class="field">Email</label>
+        <input type="email" id="li-email" placeholder="priya@demo.com">
+        <label class="field">Password</label>
+        <input type="password" id="li-pass" placeholder="••••••••">
+        <button class="btn-primary" onclick="doLogin()">Log in</button>
+        <div id="loginMsg"></div>
+        <p style="font-size:.75rem;color:var(--text-soft);margin-top:16px;">Quick-fill demo accounts:</p>
+        <div class="seed-row">
+          <button class="btn-ghost" onclick="fillSeed('coordinator')">Coordinator</button>
+          <button class="btn-ghost" onclick="fillSeed('priya')">Priya (employee)</button>
+          <button class="btn-ghost" onclick="fillSeed('rahul')">Rahul (employee)</button>
+        </div>
+      </div>
+      <div id="signupForm" style="display:none;">
+        <label class="field">Name</label>
+        <input type="text" id="su-name" placeholder="Jane Doe">
+        <label class="field">Email</label>
+        <input type="email" id="su-email" placeholder="jane@demo.com">
+        <label class="field">Password (min 8 chars)</label>
+        <input type="password" id="su-pass" placeholder="••••••••">
+        <label class="field">Role</label>
+        <select id="su-role"><option value="employee">Employee</option><option value="coordinator">Coordinator</option></select>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.85rem;color:var(--text-soft);">
+          <input type="checkbox" id="su-consent" style="width:auto;"> I consent to daily check-in data being processed
+        </label>
+        <button class="btn-primary" onclick="doSignup()">Create account</button>
+        <div id="signupMsg"></div>
+      </div>
+    </div>
+    <div class="disclaimer" style="max-width:420px;margin:16px auto 0;">
+      <b>How the real backend works:</b> passwords are hashed with bcrypt (10 rounds) before storage. Login verifies the hash with <code>bcrypt.compareSync()</code>. A JWT (8h expiry) is returned and stored in memory — sent as <code>Authorization: Bearer &lt;token&gt;</code> on every API call.
+    </div>
+  </section>
+
+  <!-- CHECK-IN -->
+  <section class="tab" data-tab="checkin">
+    <div class="eyebrow">Core loop · Live API calls</div>
+    <h2>Check-in &amp; Storage</h2>
+    <p class="lede">Submit a real check-in — it is scored server-side and written into the SQLite database via <code>POST /api/checkins</code>.</p>
+
+    <div class="card" style="margin-top:16px;border-left:3px solid #e0b32e;background:rgba(224,179,46,0.08);">
+      <p style="font-size:.85rem;color:var(--text-soft);margin:0;">
+        <strong>Not a crisis service.</strong> This tool supports early, low-level check-ins and routes high-risk
+        entries to a human coordinator — it does not replace emergency care. If you or someone you know is in
+        immediate distress, please contact a local emergency number or a crisis helpline directly
+        (in India: <strong>iCall — 9152987821</strong>, or <strong>Vandrevala Foundation — 1860-2662-345</strong>).
+      </p>
+    </div>
+
+    <div id="checkinLoggedOut" class="role-gate" style="margin-top:20px;">
+      You're not logged in. Go to the <b>Login</b> tab first.
+    </div>
+
+    <div id="checkinEmployeeView" style="display:none;margin-top:20px;">
+      <div class="checkin-grid">
+        <div class="card">
+          <h4>New check-in</h4>
+          <label class="field">Mood (1 = very low, 5 = great)</label>
+          <div class="mood-row" id="moodRow"></div>
+          <label class="field">PHQ-2 · Little interest or pleasure (0–3)</label>
+          <select id="phq1">
+            <option value="0">0 — Not at all</option><option value="1">1 — Several days</option>
+            <option value="2" selected>2 — More than half the days</option><option value="3">3 — Nearly every day</option>
+          </select>
+          <label class="field">PHQ-2 · Feeling down / hopeless (0–3)</label>
+          <select id="phq2">
+            <option value="0">0 — Not at all</option><option value="1" selected>1 — Several days</option>
+            <option value="2">2 — More than half the days</option><option value="3">3 — Nearly every day</option>
+          </select>
+          <label class="field">Free-text note (optional)</label>
+          <textarea id="freeText" rows="3" placeholder="Anything on your mind today..."></textarea>
+          <button class="btn-primary" id="submitBtn" onclick="submitCheckin()">Submit check-in</button>
+        </div>
+        <div id="resultPanel" class="result-panel low card">
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-soft);">Result</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span>Risk level</span><span class="level" id="resultLevel">—</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="resultBar" style="width:0%;background:var(--low);"></div></div>
+          <ul class="rationale-list" id="resultRationale"></ul>
+          <div class="intervention-box" id="resultAction"></div>
+        </div>
+      </div>
+      <h4 style="margin-top:26px;">Your stored check-ins</h4>
+      <table class="styled" id="myCheckinsTable">
+        <thead><tr><th>When</th><th>Mood</th><th>PHQ-2</th><th>Risk</th><th>Score</th></tr></thead>
+        <tbody id="myCheckinsTbody"><tr><td colspan="5" style="color:var(--text-soft);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="checkinCoordinatorView" style="display:none;margin-top:20px;">
+      <div class="stat-strip">
+        <div class="stat-box"><div class="n" id="statOpen">—</div><div class="l">Open</div></div>
+        <div class="stat-box"><div class="n" id="statReviewed">—</div><div class="l">Reviewed</div></div>
+        <div class="stat-box"><div class="n" id="statResolved">—</div><div class="l">Resolved</div></div>
+      </div>
+      <div class="card">
+        <h4>Alert queue — high-risk cases requiring review</h4>
+        <div id="alertQueue"><p style="color:var(--text-soft);font-size:.85rem;">Loading...</p></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <h4>All check-ins — every employee</h4>
+        <table class="styled" id="allCheckinsTable" style="margin-top:10px;">
+          <thead><tr><th>When</th><th>Employee</th><th>Mood</th><th>PHQ-2</th><th>Risk</th><th>Score</th></tr></thead>
+          <tbody id="allCheckinsTbody"><tr><td colspan="6" style="color:var(--text-soft);">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <h4>Recent login &amp; signup activity</h4>
+        <div id="loginActivity"><p style="color:var(--text-soft);font-size:.85rem;">Loading...</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BACKEND -->
+  <section class="tab" data-tab="backend">
+    <div class="eyebrow">Backend architecture · Express REST API</div>
+    <h2>Backend functionality</h2>
+    <p class="lede">Express REST API, JWT-authenticated, with a role-guard middleware and a fully explainable scoring module.</p>
+    <table class="styled" style="margin-top:16px;">
+      <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method post">POST</span></td><td>/api/auth/signup</td><td>None</td><td>Create account; employees must send <code>consentGiven: true</code></td></tr>
+        <tr><td><span class="method post">POST</span></td><td>/api/auth/login</td><td>None</td><td>Returns JWT + user object</td></tr>
+        <tr><td><span class="method post">POST</span></td><td>/api/checkins</td><td>Any logged-in</td><td>Submit check-in → returns risk result + intervention or escalation</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/api/checkins/me</td><td>Any logged-in</td><td>Own check-in history</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/api/checkins/all</td><td>Coordinator only</td><td>All employees' check-ins</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/api/alerts</td><td>Coordinator only</td><td>List alerts, filterable by status</td></tr>
+        <tr><td><span class="method patch">PATCH</span></td><td>/api/alerts/:id</td><td>Coordinator only</td><td>Update status and/or notes</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/api/reports/summary</td><td>Coordinator only</td><td>Aggregated stats for dashboard</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/api/reports/logins</td><td>Coordinator only</td><td>Login/signup activity log</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/api/health</td><td>None</td><td>Liveness check</td></tr>
+      </tbody>
+    </table>
+    <h3 style="margin-top:26px;">Risk-scoring engine</h3>
+    <p class="lede">Lives in <code>server/lib/riskEngine.js</code> — rule-based, fully auditable.</p>
+    <div class="formula-box">
+riskScore = <span class="hl">phqNorm × 0.5</span> + <span class="hl">moodNorm × 0.2</span> + <span class="hl">sentimentNorm × 0.3</span>&nbsp; (clamped 0–1)<br>
+≥ 0.66 → <span class="hl">high</span> &nbsp;·&nbsp; 0.34–0.65 → <span class="hl">moderate</span> &nbsp;·&nbsp; below 0.34 → <span class="hl">low</span><br>
+crisis-phrase match → override to HIGH, floor at <span class="hl">0.85</span>
+    </div>
+  </section>
+
+  <!-- DATABASE -->
+  <section class="tab" data-tab="database">
+    <div class="eyebrow">Data model · SQLite via better-sqlite3</div>
+    <h2>Database integration</h2>
+    <p class="lede">Single-file SQLite with real foreign keys, CHECK-constrained enums, and indexes on the two most-queried columns.</p>
+    <div class="erd" style="margin-top:20px;">
+      <div class="table-card">
+        <div class="t-head">users</div>
+        <div class="t-row pk"><span class="fname">id</span><span class="ftype">PK autoincrement</span></div>
+        <div class="t-row"><span class="fname">name</span><span class="ftype">TEXT NOT NULL</span></div>
+        <div class="t-row"><span class="fname">email</span><span class="ftype">TEXT UNIQUE</span></div>
+        <div class="t-row"><span class="fname">password_hash</span><span class="ftype">TEXT</span></div>
+        <div class="t-row"><span class="fname">role</span><span class="ftype">employee|coordinator</span></div>
+        <div class="t-row"><span class="fname">consent_given</span><span class="ftype">INTEGER</span></div>
+        <div class="t-row"><span class="fname">created_at</span><span class="ftype">TEXT</span></div>
+      </div>
+      <div class="table-card">
+        <div class="t-head">checkins</div>
+        <div class="t-row pk"><span class="fname">id</span><span class="ftype">PK</span></div>
+        <div class="t-row"><span class="fname">user_id</span><span class="ftype">FK → users.id</span></div>
+        <div class="t-row"><span class="fname">mood_score</span><span class="ftype">1–5</span></div>
+        <div class="t-row"><span class="fname">phq_interest</span><span class="ftype">0–3</span></div>
+        <div class="t-row"><span class="fname">phq_mood</span><span class="ftype">0–3</span></div>
+        <div class="t-row"><span class="fname">risk_score</span><span class="ftype">REAL 0..1</span></div>
+        <div class="t-row"><span class="fname">risk_level</span><span class="ftype">low|moderate|high</span></div>
+        <div class="t-row"><span class="fname">crisis_flag</span><span class="ftype">INTEGER</span></div>
+      </div>
+      <div class="table-card">
+        <div class="t-head">alerts</div>
+        <div class="t-row pk"><span class="fname">id</span><span class="ftype">PK</span></div>
+        <div class="t-row"><span class="fname">checkin_id</span><span class="ftype">FK → checkins.id</span></div>
+        <div class="t-row"><span class="fname">user_id</span><span class="ftype">FK → users.id</span></div>
+        <div class="t-row"><span class="fname">status</span><span class="ftype">open|reviewed|resolved</span></div>
+        <div class="t-row"><span class="fname">coordinator_notes</span><span class="ftype">TEXT</span></div>
+        <div class="t-row"><span class="fname">reviewed_by</span><span class="ftype">FK → users.id</span></div>
+        <div class="t-row"><span class="fname">resolved_at</span><span class="ftype">TEXT</span></div>
+      </div>
+      <div class="table-card">
+        <div class="t-head">logins</div>
+        <div class="t-row pk"><span class="fname">id</span><span class="ftype">PK</span></div>
+        <div class="t-row"><span class="fname">user_id</span><span class="ftype">FK → users.id</span></div>
+        <div class="t-row"><span class="fname">name</span><span class="ftype">TEXT</span></div>
+        <div class="t-row"><span class="fname">role</span><span class="ftype">employee|coordinator</span></div>
+        <div class="t-row"><span class="fname">event</span><span class="ftype">signup|login</span></div>
+        <div class="t-row"><span class="fname">user_status</span><span class="ftype">new|existing</span></div>
+        <div class="t-row"><span class="fname">created_at</span><span class="ftype">TEXT</span></div>
+      </div>
+    </div>
+    <div class="grid cols-2" style="margin-top:20px;">
+      <div class="card"><h4>⚡ Indexed for query patterns</h4><p style="font-size:.85rem;color:var(--text-soft);"><code>idx_checkins_user</code> and <code>idx_alerts_status</code> back the two lookups every page performs on load.</p></div>
+      <div class="card"><h4>🔗 Referential integrity</h4><p style="font-size:.85rem;color:var(--text-soft);"><code>ON DELETE CASCADE</code> on foreign keys. <code>PRAGMA foreign_keys = ON</code> set explicitly — SQLite doesn't enforce this by default.</p></div>
+    </div>
+  </section>
+
+  <!-- REPORTS -->
+  <section class="tab" data-tab="reports">
+    <div class="eyebrow">Live data · From SQLite via API</div>
+    <h2>Reports</h2>
+    <p class="lede"><span class="live-dot"><span class="pulse"></span> Live</span> Data pulled from <code>GET /api/reports/summary</code> every time you open this tab.</p>
+    <div id="reportsLoggedOut" class="role-gate" style="margin-top:20px;">Log in as the <b>Coordinator</b> to see live reports.</div>
+    <div id="reportsCoordView" style="display:none;">
+      <div class="stat-strip" style="margin-top:18px;">
+        <div class="stat-box"><div class="n" id="repUsers">—</div><div class="l">Employees</div></div>
+        <div class="stat-box"><div class="n" id="repCheckins">—</div><div class="l">Check-ins</div></div>
+        <div class="stat-box"><div class="n" id="repEscalations">—</div><div class="l">Escalations</div></div>
+        <div class="stat-box"><div class="n" id="repAvgScore">—</div><div class="l">Avg. risk score</div></div>
+      </div>
+      <div class="report-grid" style="margin-top:20px;">
+        <div class="chart-card"><h4>Check-ins by risk level</h4><div class="chart-box"><canvas id="chartRiskLevel"></canvas></div></div>
+        <div class="chart-card"><h4>Alert queue status</h4><div class="chart-box"><canvas id="chartAlertStatus"></canvas></div></div>
+      </div>
+      <div class="report-grid full" style="margin-top:18px;">
+        <div class="chart-card"><h4>Risk score trend</h4><div class="chart-box"><canvas id="chartTrend"></canvas></div></div>
+      </div>
+      <div class="grid cols-2" style="margin-top:18px;">
+        <div class="card"><h4>Per-employee summary</h4><div id="repLeaderboard"></div></div>
+        <div class="card"><h4>Open alerts</h4><div id="repOpenAlerts"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIMITATIONS -->
+  <section class="tab" data-tab="limits">
+    <div class="eyebrow">Sections 5–7 of the report</div>
+    <h2>Limitations &amp; future work</h2>
+    <ul class="bullets">
+      <li>The free-text sentiment layer is a keyword proxy, not a validated clinical instrument.</li>
+      <li>The word list contains at least one duplicate-entry defect (stress/stressed).</li>
+      <li>The crisis-phrase list is intentionally short and literal — paraphrased ideation can fall through.</li>
+      <li>No operational SLA for how quickly an open alert must be reviewed.</li>
+      <li>A pilot validating <code>risk_score</code> against PHQ-9 would be the natural next research step.</li>
+    </ul>
+    <h3 style="margin-top:26px;">File structure</h3>
+    <div class="formula-box" style="font-size:.8rem;line-height:2;">
+first-signal/<br>
+├── <span class="hl">server/</span><br>
+│   ├── index.js          <span style="color:#7aaa8a;">← Express app, serves frontend + API</span><br>
+│   ├── db.js             <span style="color:#7aaa8a;">← SQLite init, schema, seed</span><br>
+│   ├── routes/<br>
+│   │   ├── auth.js       <span style="color:#7aaa8a;">← POST /signup, /login</span><br>
+│   │   ├── checkins.js   <span style="color:#7aaa8a;">← POST /, GET /me, GET /all</span><br>
+│   │   ├── alerts.js     <span style="color:#7aaa8a;">← GET /, PATCH /:id</span><br>
+│   │   └── reports.js    <span style="color:#7aaa8a;">← GET /summary, /logins</span><br>
+│   ├── middleware/<br>
+│   │   └── auth.js       <span style="color:#7aaa8a;">← requireAuth, requireRole</span><br>
+│   └── lib/<br>
+│       └── riskEngine.js <span style="color:#7aaa8a;">← scoring formula</span><br>
+├── <span class="hl">public/</span><br>
+│   └── index.html        <span style="color:#7aaa8a;">← this frontend</span><br>
+├── data/<br>
+│   └── first_signal.db   <span style="color:#7aaa8a;">← SQLite file (auto-created)</span><br>
+├── .env<br>
+└── package.json
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    First Signal · Continuous Internal Assessment – II · MBA Programme, CHRIST (Deemed to be University), Bangalore<br>
+    Anuraag Nambiar · Jithin Francis A · Ponnuru Praneeth Chandra — under the guidance of Dr. Shailendra Kadre
+  </footer>
+</div>
+
+<script>
+// ── API base ──────────────────────────────────────────────────────────────────
+const API = '';  // same origin — empty string means relative URLs
+
+// ── Session (in-memory only; JWT stored here) ─────────────────────────────────
+let session = null; // { id, name, role, token }
+
+function authHeader() {
+  return session ? { 'Authorization': 'Bearer ' + session.token } : {};
+}
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...authHeader(), ...(opts.headers || {}) },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+const TABS = [
+  {id:'overview', label:'Overview'},
+  {id:'login', label:'Login'},
+  {id:'checkin', label:'Check-in & Storage'},
+  {id:'backend', label:'Backend & Risk Engine'},
+  {id:'database', label:'Database'},
+  {id:'reports', label:'Reports'},
+  {id:'limits', label:'Limitations'},
+];
+const nav = document.getElementById('tabNav');
+TABS.forEach(t => {
+  const b = document.createElement('button');
+  b.textContent = t.label; b.dataset.tab = t.id;
+  if (t.id === 'overview') b.classList.add('active');
+  b.onclick = () => switchTab(t.id);
+  nav.appendChild(b);
+});
+function switchTab(id) {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('active', s.dataset.tab === id));
+  if (id === 'checkin') renderCheckinTab();
+  if (id === 'reports') renderReports();
+}
+
+// ── Session badge ─────────────────────────────────────────────────────────────
+function updateSessionBadge() {
+  const el = document.getElementById('sessionBadge');
+  if (session) {
+    el.innerHTML = 'Logged in as <b>' + session.name + '</b> (' + session.role + ') <button onclick="doLogout()">Log out</button>';
+  } else {
+    el.textContent = 'Not logged in';
+  }
+}
+function doLogout() { session = null; updateSessionBadge(); switchTab('overview'); }
+
+// ── Login helpers ─────────────────────────────────────────────────────────────
+function fillSeed(who) {
+  const m = { coordinator:['coordinator@demo.com','ChangeMe123!'], priya:['priya@demo.com','password123'], rahul:['rahul@demo.com','password123'] };
+  document.getElementById('li-email').value = m[who][0];
+  document.getElementById('li-pass').value  = m[who][1];
+}
+document.getElementById('showLogin').onclick = () => {
+  document.getElementById('showLogin').classList.add('active');
+  document.getElementById('showSignup').classList.remove('active');
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('signupForm').style.display = 'none';
+};
+document.getElementById('showSignup').onclick = () => {
+  document.getElementById('showSignup').classList.add('active');
+  document.getElementById('showLogin').classList.remove('active');
+  document.getElementById('signupForm').style.display = 'block';
+  document.getElementById('loginForm').style.display = 'none';
+};
+
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const password = document.getElementById('li-pass').value;
+  const msg = document.getElementById('loginMsg');
+  msg.innerHTML = '<div class="form-msg"><span class="spinner"></span>Logging in...</div>';
+  try {
+    const data = await apiFetch('/api/auth/login', { method:'POST', body:{ email, password } });
+    session = { ...data.user, token: data.token };
+    msg.innerHTML = '<div class="form-msg ok">Logged in as ' + data.user.name + '.</div>';
+    updateSessionBadge();
+    setTimeout(() => switchTab('checkin'), 600);
+  } catch(e) {
+    msg.innerHTML = '<div class="form-msg err">' + e.message + '</div>';
+  }
+}
+
+async function doSignup() {
+  const name = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const password = document.getElementById('su-pass').value;
+  const role = document.getElementById('su-role').value;
+  const consentGiven = document.getElementById('su-consent').checked;
+  const msg = document.getElementById('signupMsg');
+  msg.innerHTML = '<div class="form-msg"><span class="spinner"></span>Creating account...</div>';
+  try {
+    const data = await apiFetch('/api/auth/signup', { method:'POST', body:{ name, email, password, role, consentGiven } });
+    session = { ...data.user, token: data.token };
+    msg.innerHTML = '<div class="form-msg ok">Account created! Logged in as ' + data.user.name + '.</div>';
+    updateSessionBadge();
+    setTimeout(() => switchTab('checkin'), 600);
+  } catch(e) {
+    msg.innerHTML = '<div class="form-msg err">' + e.message + '</div>';
+  }
+}
+
+// ── Mood selector ─────────────────────────────────────────────────────────────
+let selectedMood = 3;
+const moodRow = document.getElementById('moodRow');
+[1,2,3,4,5].forEach(m => {
+  const b = document.createElement('button');
+  b.className = 'mood-btn' + (m === 3 ? ' active' : '');
+  b.textContent = m;
+  b.onclick = () => {
+    selectedMood = m;
+    document.querySelectorAll('.mood-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+  };
+  moodRow.appendChild(b);
+});
+
+// ── Check-in tab ──────────────────────────────────────────────────────────────
+function renderCheckinTab() {
+  const loggedOut = document.getElementById('checkinLoggedOut');
+  const empView   = document.getElementById('checkinEmployeeView');
+  const coordView = document.getElementById('checkinCoordinatorView');
+  loggedOut.style.display  = session ? 'none' : 'block';
+  empView.style.display    = (session && session.role === 'employee') ? 'block' : 'none';
+  coordView.style.display  = (session && session.role === 'coordinator') ? 'block' : 'none';
+  if (session && session.role === 'employee') loadMyCheckins();
+  if (session && session.role === 'coordinator') { loadAlerts(); loadAllCheckins(); loadLoginActivity(); }
+}
+
+async function loadMyCheckins() {
+  try {
+    const rows = await apiFetch('/api/checkins/me');
+    const tbody = document.getElementById('myCheckinsTbody');
+    tbody.innerHTML = rows.length ? rows.map(c =>
+      '<tr><td>' + new Date(c.created_at).toLocaleString() + '</td><td>' + c.mood_score + '/5</td>' +
+      '<td>' + (c.phq_interest + c.phq_mood) + '/6</td>' +
+      '<td><span class="pill ' + c.risk_level + '">' + c.risk_level + '</span></td>' +
+      '<td>' + Math.round(c.risk_score * 100) + '/100</td></tr>'
+    ).join('') : '<tr><td colspan="5" style="color:var(--text-soft);">No check-ins yet.</td></tr>';
+  } catch(e) { console.error(e); }
+}
+
+async function submitCheckin() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Submitting...';
+  try {
+    const data = await apiFetch('/api/checkins', {
+      method: 'POST',
+      body: { mood: selectedMood, phq1: Number(document.getElementById('phq1').value), phq2: Number(document.getElementById('phq2').value), freeText: document.getElementById('freeText').value }
+    });
+    const { riskScore, riskLevel, rationale, intervention, alert } = data;
+    const panel = document.getElementById('resultPanel');
+    panel.className = 'result-panel card ' + riskLevel;
+    document.getElementById('resultLevel').textContent = riskLevel.toUpperCase();
+    document.getElementById('resultBar').style.width   = Math.round(riskScore * 100) + '%';
+    document.getElementById('resultBar').style.background = riskLevel === 'high' ? 'var(--high)' : (riskLevel === 'moderate' ? 'var(--moderate)' : 'var(--low)');
+    document.getElementById('resultRationale').innerHTML = rationale.map(r => '<li>' + r + '</li>').join('');
+    const actionBox = document.getElementById('resultAction');
+    if (riskLevel === 'high') {
+      actionBox.innerHTML = '<b>🚨 Escalated:</b> routed to a care coordinator for human review. Alert #' + (alert ? alert.id : '?') + ' created.';
+    } else {
+      actionBox.innerHTML = '<b>' + intervention.title + ':</b> ' + intervention.body;
+    }
+    document.getElementById('freeText').value = '';
+    loadMyCheckins();
+  } catch(e) {
+    document.getElementById('resultAction').innerHTML = '<span style="color:var(--high);">Error: ' + e.message + '</span>';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Submit check-in';
+  }
+}
+
+async function loadAlerts() {
+  try {
+    const alerts = await apiFetch('/api/alerts');
+    document.getElementById('statOpen').textContent     = alerts.filter(a => a.status === 'open').length;
+    document.getElementById('statReviewed').textContent = alerts.filter(a => a.status === 'reviewed').length;
+    document.getElementById('statResolved').textContent = alerts.filter(a => a.status === 'resolved').length;
+    const q = document.getElementById('alertQueue');
+    if (!alerts.length) { q.innerHTML = '<p style="color:var(--text-soft);font-size:.85rem;">No alerts yet.</p>'; return; }
+    q.innerHTML = alerts.map(a =>
+      '<div class="queue-row">' +
+      '<div><b>#' + a.id + '</b> · ' + a.user_name + '<br><span style="color:var(--text-soft);font-size:.78rem;">Score: ' + Math.round(a.risk_score * 100) + '/100 → ' + a.risk_level.toUpperCase() + '</span>' +
+      (a.free_text ? '<br><span style="color:var(--text-soft);font-size:.75rem;font-style:italic;">"' + a.free_text.slice(0, 80) + '"</span>' : '') + '</div>' +
+      '<span class="pill ' + a.risk_level + '">' + a.risk_level + '</span>' +
+      '<div class="queue-actions">' +
+        '<select id="status-' + a.id + '"><option value="open"' + (a.status==='open'?' selected':'') + '>open</option><option value="reviewed"' + (a.status==='reviewed'?' selected':'') + '>reviewed</option><option value="resolved"' + (a.status==='resolved'?' selected':'') + '>resolved</option></select>' +
+        '<input type="text" id="notes-' + a.id + '" placeholder="Notes" value="' + (a.coordinator_notes || '').replace(/"/g,'&quot;') + '" style="width:120px;padding:6px 8px;font-size:.78rem;">' +
+        '<button class="save-btn" onclick="saveAlert(' + a.id + ')">Save</button>' +
+      '</div></div>'
+    ).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function saveAlert(id) {
+  try {
+    await apiFetch('/api/alerts/' + id, {
+      method: 'PATCH',
+      body: { status: document.getElementById('status-' + id).value, coordinator_notes: document.getElementById('notes-' + id).value }
+    });
+    loadAlerts();
+  } catch(e) { alert(e.message); }
+}
+
+async function loadAllCheckins() {
+  try {
+    const rows = await apiFetch('/api/checkins/all');
+    const tbody = document.getElementById('allCheckinsTbody');
+    tbody.innerHTML = rows.length ? rows.map(c =>
+      '<tr><td>' + new Date(c.created_at).toLocaleString() + '</td><td>' + c.user_name + '</td>' +
+      '<td>' + c.mood_score + '/5</td><td>' + (c.phq_interest + c.phq_mood) + '/6</td>' +
+      '<td><span class="pill ' + c.risk_level + '">' + c.risk_level + '</span></td>' +
+      '<td>' + Math.round(c.risk_score * 100) + '/100</td></tr>'
+    ).join('') : '<tr><td colspan="6" style="color:var(--text-soft);">No check-ins yet.</td></tr>';
+  } catch(e) { console.error(e); }
+}
+
+async function loadLoginActivity() {
+  try {
+    const rows = await apiFetch('/api/reports/logins');
+    const el = document.getElementById('loginActivity');
+    el.innerHTML = rows.length ? rows.slice(0, 20).map(l =>
+      '<div class="log-row"><span class="event-pill ' + l.event + '">' + l.event + '</span>' +
+      '<span>' + l.name + ' <span style="color:var(--text-soft);font-size:.76rem;">(' + l.role + ')</span></span>' +
+      '<span></span><span style="color:var(--text-soft);font-size:.76rem;">' + new Date(l.created_at).toLocaleString() + '</span></div>'
+    ).join('') : '<p style="color:var(--text-soft);font-size:.85rem;">No activity yet.</p>';
+  } catch(e) { console.error(e); }
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+let charts = {};
+async function renderReports() {
+  const loggedOut  = document.getElementById('reportsLoggedOut');
+  const coordView  = document.getElementById('reportsCoordView');
+  if (!session || session.role !== 'coordinator') {
+    loggedOut.style.display = 'block'; coordView.style.display = 'none'; return;
+  }
+  loggedOut.style.display = 'none'; coordView.style.display = 'block';
+  try {
+    const d = await apiFetch('/api/reports/summary');
+    document.getElementById('repUsers').textContent        = d.totalUsers;
+    document.getElementById('repCheckins').textContent     = d.totalCheckins;
+    document.getElementById('repEscalations').textContent  = d.totalEscalations;
+    document.getElementById('repAvgScore').textContent     = d.avgScore + '/100';
+
+    drawChart('chartRiskLevel', 'bar', {
+      labels:['Low','Moderate','High'],
+      datasets:[{label:'Check-ins', data:[d.byLevel.low||0, d.byLevel.moderate||0, d.byLevel.high||0], backgroundColor:['#4c7a56','#c68a2e','#b8402f']}]
+    }, {plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{precision:0}}}});
+
+    drawChart('chartAlertStatus', 'doughnut', {
+      labels:['Open','Reviewed','Resolved'],
+      datasets:[{data:[d.byStatus.open||0, d.byStatus.reviewed||0, d.byStatus.resolved||0], backgroundColor:['#b8402f','#c68a2e','#4c7a56']}]
+    }, {plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}}}}});
+
+    drawChart('chartTrend', 'line', {
+      labels: d.trend.map((_,i) => '#' + (i+1)),
+      datasets:[{label:'Risk score', data: d.trend.map(r => r.score), borderColor:'#1f5c4f', backgroundColor:'rgba(31,92,79,.12)', fill:true, tension:.3, pointRadius:3}]
+    }, {plugins:{legend:{display:false}}, scales:{y:{min:0, max:100}}});
+
+    document.getElementById('repLeaderboard').innerHTML = d.perEmployee.length
+      ? d.perEmployee.map(u => '<div class="leaderboard-row"><span>' + u.name + '</span><span>' + u.checkin_count + ' check-in(s)' + (u.avg_score != null ? ' · avg ' + u.avg_score + '/100' : '') + '</span></div>').join('')
+      : '<p style="color:var(--text-soft);font-size:.85rem;">No employees yet.</p>';
+
+    const open = await apiFetch('/api/alerts?status=open');
+    document.getElementById('repOpenAlerts').innerHTML = open.length
+      ? open.map(a => '<div class="leaderboard-row"><span>#' + a.id + ' · ' + a.user_name + '</span><span class="pill high">open</span></div>').join('')
+      : '<p style="color:var(--text-soft);font-size:.85rem;">No open alerts.</p>';
+  } catch(e) { console.error(e); }
+}
+
+function drawChart(canvasId, type, data, extra) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(ctx, { type, data, options: Object.assign({ responsive:true, maintainAspectRatio:false }, extra||{}) });
+}
+
+updateSessionBadge();
+</script>
+</body>
+</html>

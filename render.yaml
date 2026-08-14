@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: first-signal
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_PATH
+        value: /data/first_signal.db
+      - key: ALLOWED_ORIGIN
+        sync: false
+    disk:
+      name: first-signal-data
+      mountPath: /data
+      sizeGB: 1
