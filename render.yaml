@@ -9,10 +9,6 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: DB_PATH
-        value: /data/first_signal.db
+        value: ./data/first_signal.db
       - key: ALLOWED_ORIGIN
         sync: false
-    disk:
-      name: first-signal-data
-      mountPath: /data
-      sizeGB: 1
